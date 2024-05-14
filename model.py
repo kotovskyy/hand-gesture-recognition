@@ -1,11 +1,12 @@
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.applications import MobileNetV2
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Flatten, Dropout
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.losses import BinaryCrossentropy
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow import keras
+from keras.applications import MobileNetV2
+from keras.models import Sequential
+from keras.layers import Dense, Flatten, Dropout
+from keras.optimizers import Adam
+from keras.losses import BinaryCrossentropy
+from keras.preprocessing.image import ImageDataGenerator
 
 # Define paths to your training and validation data
 train_data_dir = '../data/train'
