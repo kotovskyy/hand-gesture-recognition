@@ -46,23 +46,33 @@ validation_generator = validation_datagen.flow_from_directory(
     batch_size=batch_size,
     class_mode='categorical')
 
-# Load pre-trained VGG19 model without the top layers (fully connected layers)
-base_model = MobileNetV2(weights=None, include_top=False, input_shape=(img_width, img_height, 3))
-
-# Freeze the convolutional layers so they are not updated during training
-for layer in base_model.layers:
-    layer.trainable = True
-
-# Build your model on top of the pre-trained VGG19 model
 model = Sequential()
-model.add(base_model)
+
+# First convolutional layer
+model.add(Conv2D(32, (3, 3), activation='relu', input_shape=(img_height, img_width, 3)))
+model.add(MaxPooling2D((2, 2)))
+
+# Second convolutional layer
+model.add(Conv2D(64, (3, 3), activation='relu'))
+model.add(MaxPooling2D((2, 2)))
+
+# Third convolutional layer
+model.add(Conv2D(128, (3, 3), activation='relu'))
+model.add(MaxPooling2D((2, 2)))
+
+# Flatten the output
 model.add(Flatten())
-model.add(Dense(512, activation='relu'))
-model.add(Dropout(0.1))
+
+# Fully connected layer
+model.add(Dense(128, activation='relu'))
+
+# Output layer (assuming 10 gesture classes)
 model.add(Dense(num_classes, activation='softmax'))
 
 # Compile the model
-model.compile(optimizer=Adam(learning_rate=0.001), loss=BinaryCrossentropy(), metrics=['accuracy'])
+model.compile(optimizer='adam',
+              loss='categorical_crossentropy',
+              metrics=['accuracy'])
 
 # Train the model
 history = model.fit(
