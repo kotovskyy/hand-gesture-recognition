@@ -3,19 +3,25 @@ import tensorflow as tf
 from tensorflow import keras
 from keras.applications import MobileNetV2
 from keras.models import Sequential
-from keras.layers import Dense, Flatten, Dropout
+from keras.layers import Dense, Flatten, Conv2D, MaxPooling2D
 from keras.optimizers import Adam
-from keras.losses import BinaryCrossentropy
+from keras.losses import SparseCategoricalCrossentropy
 from keras.preprocessing.image import ImageDataGenerator
+from keras.callbacks import TensorBoard
+import time
+
+NAME = "CustomModel3Layers-TEST{}".format(int(time.time()))
+
+tensorboad = TensorBoard(log_dir='logs/{}'.format(NAME))
 
 # Define paths to your training and validation data
-train_data_dir = '../data/train'
-validation_data_dir = '../data/test'
+train_data_dir = 'data/train'
+validation_data_dir = 'data/test'
 
 # Define parameters
 img_width, img_height = 100, 100  # Input image dimensions
 batch_size = 32
-epochs = 10
+epochs = 3
 num_classes = 4  # Number of classes in your dataset
 
 # Preprocess and augment your training data
@@ -61,10 +67,11 @@ model.compile(optimizer=Adam(learning_rate=0.001), loss=BinaryCrossentropy(), me
 # Train the model
 history = model.fit(
     train_generator,
-    #steps_per_epoch=train_generator.samples // batch_size,
+    batch_size=batch_size,
     epochs=epochs,
     validation_data=validation_generator,
-    validation_steps=validation_generator.samples // batch_size)
+    validation_steps=validation_generator.samples // batch_size,
+    callbacks=[tensorboad])
 
 # Evaluate the model
 score = model.evaluate(validation_generator, verbose=0)
