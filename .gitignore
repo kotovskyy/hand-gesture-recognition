@@ -1,1 +1,5 @@
-test.py
+test*.py
+data/
+model*.h5
+.python-version
+test*.ipynb
