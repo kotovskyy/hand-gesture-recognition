@@ -1,37 +1,89 @@
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
+import numpy as np
+import tensorflow as tf
+from tensorflow import keras
+from keras.applications import MobileNetV2
+from keras.models import Sequential
+from keras.layers import Dense, Flatten, Conv2D, MaxPooling2D
+from keras.optimizers import Adam
+from keras.losses import SparseCategoricalCrossentropy
+from keras.preprocessing.image import ImageDataGenerator
+from keras.callbacks import TensorBoard
+import time
 
-class Gesture_Classifier:
-    def __init__ (self, image_height, image_width, num_channels, num_classes):
-        self.image_height = image_height
-        self.image_width = image_width
-        self.num_channels = num_channels
-        self.num_classes = num_classes
-        self.model = self._create_model()
+NAME = "CustomModel3Layers-TEST{}".format(int(time.time()))
 
-    def _create_model(self):
-        # Initialize the model
-        model = Sequential()
+tensorboad = TensorBoard(log_dir='logs/{}'.format(NAME))
 
-        # Add convolutional layers
-        model.add(Conv2D(32, (3, 3), activation='relu', input_shape=(self.image_height, self.image_width, self.num_channels)))
-        model.add(MaxPooling2D((2, 2)))
-        model.add(Conv2D(64, (3, 3), activation='relu'))
-        model.add(MaxPooling2D((2, 2)))
-        model.add(Conv2D(128, (3, 3), activation='relu'))
-        model.add(MaxPooling2D((2, 2)))
+# Define paths to your training and validation data
+train_data_dir = 'data/train'
+validation_data_dir = 'data/test'
 
-        # Flatten layer
-        model.add(Flatten())
+# Define parameters
+img_width, img_height = 100, 100  # Input image dimensions
+batch_size = 32
+epochs = 3
+num_classes = 4  # Number of classes in your dataset
 
-        # Fully connected layers
-        model.add(Dense(128, activation='relu'))
-        model.add(Dense(self.num_classes, activation='softmax'))
+# Preprocess and augment your training data
+train_datagen = ImageDataGenerator(
+    rescale=1. / 255,
+    shear_range=0.2,
+    zoom_range=0.2,
+    horizontal_flip=True)
 
-        # Compile the model
-        model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+train_generator = train_datagen.flow_from_directory(
+    train_data_dir,
+    target_size=(img_width, img_height),
+    batch_size=batch_size,
+    class_mode='categorical')
 
-        return model
-    
-    def summary(self):
-        self.model.summary()
+# Preprocess your validation data
+validation_datagen = ImageDataGenerator(rescale=1. / 255)
+
+validation_generator = validation_datagen.flow_from_directory(
+    validation_data_dir,
+    target_size=(img_width, img_height),
+    batch_size=batch_size,
+    class_mode='categorical')
+
+model = Sequential()
+
+# First convolutional layer
+model.add(Conv2D(32, (3, 3), activation='relu', input_shape=(img_height, img_width, 3)))
+model.add(MaxPooling2D((2, 2)))
+
+# Second convolutional layer
+model.add(Conv2D(64, (3, 3), activation='relu'))
+model.add(MaxPooling2D((2, 2)))
+
+# Third convolutional layer
+model.add(Conv2D(128, (3, 3), activation='relu'))
+model.add(MaxPooling2D((2, 2)))
+
+# Flatten the output
+model.add(Flatten())
+
+# Fully connected layer
+model.add(Dense(128, activation='relu'))
+
+# Output layer (assuming 10 gesture classes)
+model.add(Dense(num_classes, activation='softmax'))
+
+# Compile the model
+model.compile(optimizer='adam',
+              loss='categorical_crossentropy',
+              metrics=['accuracy'])
+
+# Train the model
+history = model.fit(
+    train_generator,
+    batch_size=batch_size,
+    epochs=epochs,
+    validation_data=validation_generator,
+    validation_steps=validation_generator.samples // batch_size,
+    callbacks=[tensorboad])
+
+# Evaluate the model
+score = model.evaluate(validation_generator, verbose=0)
+print('Test loss:', score[0])
+print('Test accuracy:', score[1])
