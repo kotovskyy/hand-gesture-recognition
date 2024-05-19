@@ -3,3 +3,5 @@ data/
 model*.h5
 .python-version
 test*.ipynb
+!mediapipe/model/data
+**/__pycache__
