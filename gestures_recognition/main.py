@@ -5,11 +5,13 @@ import time
 from typing import List, Tuple
 import numpy as np
 import mediapipe as mp
+from model.gesture_classifier import GestureClassifier
 
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
 mp_hands = mp.solutions.hands
 
+LABELS = ["Closed", "Okay", "Open"]
 
 class MediaPipeHandLandmarks:
     def __init__(
@@ -49,6 +51,8 @@ class MediaPipeHandLandmarks:
         FONT = cv2.FONT_HERSHEY_COMPLEX
         COLOR_WHITE = (255, 255, 255)
 
+        gesture_classifier = GestureClassifier("models/sign_net_v1.tflite")
+        
         with mp_hands.Hands(
             model_complexity=self.model_complexity,
             static_image_mode=self.static_image_mode,
@@ -85,8 +89,15 @@ class MediaPipeHandLandmarks:
 
                         bounding_box = self._cals_bounding_box(landmarks_list)
 
+                        hand_part = self._prep_image_part(image_copy, bounding_box)
+                        hand_gesture_id = gesture_classifier(hand_part)
+
                         image_copy = self.draw_bounding_box(
                             self.show_bounding_boxes, image_copy, bounding_box
+                        )
+
+                        image_copy = self.draw_text_info(
+                            image_copy, bounding_box, LABELS[hand_gesture_id]
                         )
 
                         if self._save_single_record:
@@ -150,12 +161,17 @@ class MediaPipeHandLandmarks:
             cap.release()
             cv2.destroyAllWindows()
 
-    def _save_image_part(self, image, bounding_box):
+    def _prep_image_part(self, image, bounding_box):
         save_part = image[
             bounding_box[1] : bounding_box[3], bounding_box[0] : bounding_box[2]
         ]
         save_part = cv2.cvtColor(save_part, cv2.COLOR_BGR2RGB)
         save_part = cv2.resize(save_part, (224, 224))
+
+        return save_part
+    
+    def _save_image_part(self, image, bounding_box):
+        save_part = self._prep_image_part(image, bounding_box)
 
         if self.image_label is None:
             raise ValueError("Label is not defined!")
@@ -243,6 +259,37 @@ class MediaPipeHandLandmarks:
         h = int(h + 100)
 
         return [x, y, x + w, y + h]
+    
+    def draw_text_info(
+        self,
+        image,
+        bounding_box,
+        hand_gesture_text,
+        text_box_height: int = 22,
+        text_box_color: Tuple[int] = (0, 0, 0),
+        text_color: Tuple[int] = (255, 255, 255),
+    ):
+        cv2.rectangle(
+            img=image,
+            pt1=(bounding_box[0], bounding_box[1]),
+            pt2=(bounding_box[2], bounding_box[1] - text_box_height),
+            color=text_box_color,
+            thickness=-1,
+        )
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        text_info = "Gesture"
+        if hand_gesture_text != "":
+            text_info += ": " + hand_gesture_text
+        cv2.putText(
+            img=image,
+            text=text_info,
+            org=(bounding_box[0] + 5, bounding_box[1] - 5),
+            fontFace=font,
+            fontScale=0.6,
+            color=text_color,
+        )
+
+        return image
 
 
 def main():
