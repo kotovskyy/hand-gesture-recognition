@@ -26,7 +26,7 @@ class SignNet:
         self.model.add(Dense(n_classes, activation="softmax"))
 
         self.model.compile(
-            optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"]
+            optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"]
         )
 
     def train(
@@ -38,24 +38,14 @@ class SignNet:
         additional_data: str = "",
     ) -> None:
 
-        train_dataset = image_dataset_from_directory(
+        train_dataset, validation_dataset = image_dataset_from_directory(
             dataset_path,
-            subset="training",
-            label_mode="categorical",
+            subset="both",
+            label_mode="int",
             image_size=self.image_shape[:2],
             batch_size=batch_size,
             validation_split=validation_split,
             seed=SEED,
-        )
-
-        validation_dataset = image_dataset_from_directory(
-            dataset_path,
-            subset="validation",
-            label_mode="categorical",
-            image_size=self.image_shape[:2],
-            batch_size=batch_size,
-            validation_split=validation_split,
-            seed=SEED
         )
 
         name = f"sign_net-{int(time.time())}{additional_data}"
