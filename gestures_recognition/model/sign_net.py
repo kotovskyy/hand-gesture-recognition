@@ -66,13 +66,6 @@ class SignNet:
             callbacks=[tensorboard, model_checkpoint],
         )
 
-    def save_as_tflite(self, model_path: str, save_path:str) -> None:
-        converter = keras.models.load_model(model_path)
-        converter = TFLiteConverter.from_keras_model(converter)
-        tflite_model = converter.convert()
-        with open(save_path, "wb") as f:
-            f.write(tflite_model)
-
 
 if __name__ == "__main__":
     sign_net = SignNet(n_classes=3)
