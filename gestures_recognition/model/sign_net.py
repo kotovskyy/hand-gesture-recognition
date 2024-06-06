@@ -6,6 +6,7 @@ from keras.utils import image_dataset_from_directory
 from keras.callbacks import ModelCheckpoint, TensorBoard
 import time
 
+SEED = 111
 
 class SignNet:
     def __init__(
@@ -44,6 +45,7 @@ class SignNet:
             image_size=self.image_shape[:2],
             batch_size=batch_size,
             validation_split=validation_split,
+            seed=SEED,
         )
 
         validation_dataset = image_dataset_from_directory(
@@ -53,9 +55,10 @@ class SignNet:
             image_size=self.image_shape[:2],
             batch_size=batch_size,
             validation_split=validation_split,
+            seed=SEED
         )
 
-        name = f"sign_net-{int(time.time)}{additional_data}"
+        name = f"sign_net-{int(time.time())}{additional_data}"
         tensorboard = TensorBoard(log_dir=f"logs/{name}")
         model_checkpoint = ModelCheckpoint(
             filepath=f"models/{name}.hdf5",
@@ -71,3 +74,8 @@ class SignNet:
             validation_data=validation_dataset,
             callbacks=[tensorboard, model_checkpoint],
         )
+
+
+if __name__ == "__main__":
+    sign_net = SignNet(n_classes=3)
+    sign_net.train("data", epochs=10, validation_split=0.2)
