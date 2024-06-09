@@ -53,7 +53,7 @@ class MediaPipeHandLandmarks:
         FONT = cv2.FONT_HERSHEY_COMPLEX
         COLOR_WHITE = (255, 255, 255)
 
-        gesture_classifier = GestureClassifier("models/sign_net_v3.tflite")
+        gesture_classifier = GestureClassifier("models/sign_net_v5.tflite")
 
         with mp_hands.Hands(
             model_complexity=self.model_complexity,
