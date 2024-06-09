@@ -36,6 +36,7 @@ class MediaPipeHandLandmarks:
         self._save_single_record = False
         self.image_label = None
         self._image_label_buffer = []
+        self._mirror_image = False
         self._last_image_index = None
 
     def get_landmarks_from_stream(self, camera_index: int = 0) -> None:
@@ -74,6 +75,9 @@ class MediaPipeHandLandmarks:
                     print("Ignoring empty camera frame.")
                     break
 
+                if self._mirror_image:
+                    image = cv2.flip(image, 1)
+                
                 image_copy = copy.deepcopy(image)
                 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
@@ -243,6 +247,10 @@ class MediaPipeHandLandmarks:
 
         if self.mode == 2:
             self._change_recording_state(key)
+            
+        if key == 102: # "f" - flip image
+            self._mirror_image = not self._mirror_image
+            
 
     def draw_bounding_box(self, show_box, image, bounding_box):
         "Draw bounding box on the image"
