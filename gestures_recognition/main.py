@@ -36,6 +36,7 @@ class MediaPipeHandLandmarks:
         self._save_single_record = False
         self.image_label = None
         self._image_label_buffer = []
+        self._last_image_index = None
 
     def get_landmarks_from_stream(self, camera_index: int = 0) -> None:
         cap = cv2.VideoCapture(camera_index)
@@ -52,7 +53,7 @@ class MediaPipeHandLandmarks:
         FONT = cv2.FONT_HERSHEY_COMPLEX
         COLOR_WHITE = (255, 255, 255)
 
-        gesture_classifier = GestureClassifier("models/sign_net_v2.tflite")
+        gesture_classifier = GestureClassifier("models/sign_net_v3.tflite")
 
         with mp_hands.Hands(
             model_complexity=self.model_complexity,
@@ -112,6 +113,9 @@ class MediaPipeHandLandmarks:
                             finally:
                                 self._save_single_record = False
 
+                        if self.mode == 2 and not self._is_data_recording:
+                            self._last_image_index = None
+                        
                         if self.mode == 2 and self._is_data_recording:
                             try:
                                 self._save_image_part(image, bounding_box)
@@ -190,16 +194,22 @@ class MediaPipeHandLandmarks:
         data_folder = f"data/{self.image_label}"
         os.makedirs(f"data/{self.image_label}", exist_ok=True)
 
-        file_counter = 0
-        while True:
-            filename = f"image_{file_counter}.jpg"
+        if self._last_image_index is None: 
+            file_counter = 0
+            while True:
+                filename = f"image_{file_counter}.jpg"
+                filepath = os.path.join(data_folder, filename)
+
+                if not os.path.exists(filepath):
+                    self._last_image_index = file_counter
+                    break  # Unique filename found
+                file_counter += 1
+        else:
+            filename = f"image_{self._last_image_index}.jpg"
             filepath = os.path.join(data_folder, filename)
+            self._last_image_index += 1
 
-            if not os.path.exists(filepath):
-                break  # Unique filename found
-            file_counter += 1
-
-        print(file_counter)
+        print(self._last_image_index)
         cv2.imwrite(filepath, save_part)
 
     def _change_recording_state(self, key):
