@@ -104,8 +104,7 @@ class MediaPipeHandLandmarks:
 
                         try:
                             hand_part = self._prep_image_part(image_copy, bounding_box)
-                            hand_gesture_id = gesture_classifier(hand_part)
-                            
+                            hand_gesture_id, probability = gesture_classifier(hand_part)
 
                             if time.time() - self.last_gesture_time > 1 and hand_gesture_id == self.last_gesture_id:
                                 if hand_gesture_id == 0:
@@ -132,7 +131,7 @@ class MediaPipeHandLandmarks:
                         )
 
                         image_copy = self.draw_text_info(
-                            image_copy, bounding_box, LABELS[hand_gesture_id]
+                            image_copy, bounding_box, LABELS[hand_gesture_id], probability
                         )
 
                         if self._save_single_record:
@@ -324,6 +323,7 @@ class MediaPipeHandLandmarks:
         image,
         bounding_box,
         hand_gesture_text,
+        probability,
         text_box_height: int = 22,
         text_box_color: Tuple[int] = (0, 0, 0),
         text_color: Tuple[int] = (255, 255, 255),
@@ -338,7 +338,7 @@ class MediaPipeHandLandmarks:
         font = cv2.FONT_HERSHEY_SIMPLEX
         text_info = "Gesture"
         if hand_gesture_text != "":
-            text_info += ": " + hand_gesture_text
+            text_info += ": " + hand_gesture_text + f" ({round(probability*100, 1)}%)"
         cv2.putText(
             img=image,
             text=text_info,

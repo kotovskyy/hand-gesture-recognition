@@ -18,4 +18,4 @@ class GestureClassifier:
         result = self.interpreter.get_tensor(self.output_details[0]['index'])
         result_index = np.argmax(result)
         
-        return result_index
+        return result_index, result[0][result_index]
