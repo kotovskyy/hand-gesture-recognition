@@ -6,6 +6,8 @@ from typing import List, Tuple
 import numpy as np
 import mediapipe as mp
 from model.gesture_classifier import GestureClassifier
+import pyautogui
+import time
 
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
@@ -38,6 +40,8 @@ class MediaPipeHandLandmarks:
         self._image_label_buffer = []
         self._mirror_image = False
         self._last_image_index = None
+        self.last_gesture_id = None
+        self.last_gesture_time = time.time()
 
     def get_landmarks_from_stream(self, camera_index: int = 0) -> None:
         cap = cv2.VideoCapture(camera_index)
@@ -54,7 +58,9 @@ class MediaPipeHandLandmarks:
         FONT = cv2.FONT_HERSHEY_COMPLEX
         COLOR_WHITE = (255, 255, 255)
 
-        gesture_classifier = GestureClassifier("models/sign_net_v5.tflite")
+
+
+        gesture_classifier = GestureClassifier("models/sign_net_v6.tflite")
 
         with mp_hands.Hands(
             model_complexity=self.model_complexity,
@@ -85,6 +91,7 @@ class MediaPipeHandLandmarks:
                 results = hands.process(image)
                 image.flags.writeable = True
 
+
                 if results.multi_hand_landmarks is not None:
                     for hand_landmarks, _ in zip(
                         results.multi_hand_landmarks, results.multi_handedness
@@ -98,6 +105,25 @@ class MediaPipeHandLandmarks:
                         try:
                             hand_part = self._prep_image_part(image_copy, bounding_box)
                             hand_gesture_id = gesture_classifier(hand_part)
+                            
+
+                            if time.time() - self.last_gesture_time > 1 and hand_gesture_id == self.last_gesture_id:
+                                if hand_gesture_id == 0:
+                                    pyautogui.press("backspace")
+                                elif hand_gesture_id == 1:
+                                    pyautogui.press("enter")
+                                elif hand_gesture_id == 2:
+                                    pyautogui.press("space")
+                                elif hand_gesture_id == 3:
+                                    pyautogui.press("left")
+                                elif hand_gesture_id == 4:
+                                    pyautogui.press("right")
+
+                                self.last_gesture_time = time.time()
+                            else:
+                                self.last_gesture_id = hand_gesture_id
+
+
                         except Exception as e:
                             pass
 
@@ -125,6 +151,9 @@ class MediaPipeHandLandmarks:
                                 self._save_image_part(image, bounding_box)
                             except Exception as e:
                                 pass
+                else:
+                    self.last_gesture_id = None
+                    self.last_gesture_time = time.time()
 
                 current_process_time = time.time()
                 fps = int(1 / (current_process_time - prev_process_time))
