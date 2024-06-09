@@ -11,7 +11,8 @@ mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
 mp_hands = mp.solutions.hands
 
-LABELS = ["Closed", "Okay", "Open"]
+LABELS = ["Closed", "Okay", "Open", "Left", "Right"]
+
 
 class MediaPipeHandLandmarks:
     def __init__(
@@ -51,8 +52,8 @@ class MediaPipeHandLandmarks:
         FONT = cv2.FONT_HERSHEY_COMPLEX
         COLOR_WHITE = (255, 255, 255)
 
-        gesture_classifier = GestureClassifier("models/sign_net_v1.tflite")
-        
+        gesture_classifier = GestureClassifier("models/sign_net_v2.tflite")
+
         with mp_hands.Hands(
             model_complexity=self.model_complexity,
             static_image_mode=self.static_image_mode,
@@ -89,8 +90,11 @@ class MediaPipeHandLandmarks:
 
                         bounding_box = self._cals_bounding_box(landmarks_list)
 
-                        hand_part = self._prep_image_part(image_copy, bounding_box)
-                        hand_gesture_id = gesture_classifier(hand_part)
+                        try:
+                            hand_part = self._prep_image_part(image_copy, bounding_box)
+                            hand_gesture_id = gesture_classifier(hand_part)
+                        except Exception as e:
+                            pass
 
                         image_copy = self.draw_bounding_box(
                             self.show_bounding_boxes, image_copy, bounding_box
@@ -169,7 +173,7 @@ class MediaPipeHandLandmarks:
         save_part = cv2.resize(save_part, (224, 224))
 
         return save_part
-    
+
     def _save_image_part(self, image, bounding_box):
         save_part = self._prep_image_part(image, bounding_box)
 
@@ -188,6 +192,7 @@ class MediaPipeHandLandmarks:
                 break  # Unique filename found
             file_counter += 1
 
+        print(file_counter)
         cv2.imwrite(filepath, save_part)
 
     def _change_recording_state(self, key):
@@ -197,7 +202,7 @@ class MediaPipeHandLandmarks:
             self._save_single_record = True
 
     def _select_image_label(self, key):
-        if 97 <= key <= 122:
+        if 97 <= key <= 122 or 65 <= key <= 90:
             self._image_label_buffer.append(chr(key))
         elif key == 8 and self._image_label_buffer:  # key == 8 - backspace
             self._image_label_buffer.pop()
@@ -259,7 +264,7 @@ class MediaPipeHandLandmarks:
         h = int(h + 100)
 
         return [x, y, x + w, y + h]
-    
+
     def draw_text_info(
         self,
         image,
