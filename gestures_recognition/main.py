@@ -105,11 +105,18 @@ class MediaPipeHandLandmarks:
                         )
 
                         if self._save_single_record:
-                            self._save_image_part(image, bounding_box)
-                            self._save_single_record = False
+                            try:
+                                self._save_image_part(image, bounding_box)
+                            except Exception as e:
+                                pass
+                            finally:
+                                self._save_single_record = False
 
                         if self.mode == 2 and self._is_data_recording:
-                            self._save_image_part(image, bounding_box)
+                            try:
+                                self._save_image_part(image, bounding_box)
+                            except Exception as e:
+                                pass
 
                 current_process_time = time.time()
                 fps = int(1 / (current_process_time - prev_process_time))
