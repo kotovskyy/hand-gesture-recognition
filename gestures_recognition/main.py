@@ -32,7 +32,9 @@ class MediaPipeHandLandmarks:
         self.min_tracking_confidence = min_tracking_confidence
         self.max_num_hands = max_num_hands
         self.show_bounding_boxes = show_bounding_boxes
-        self.MODES_NUMBER = 3
+        # 0 - overview mode, 1 - gestures actions, 
+        # 2 - enter gesture name, 3 - data collection mode
+        self.MODES_NUMBER = 4  
         self.mode = 0
         self._is_data_recording = False
         self._save_single_record = False
@@ -51,14 +53,8 @@ class MediaPipeHandLandmarks:
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 960)
 
         prev_process_time = 0
-        # Mode defines current behavior of the app
-        # mode = 0 - regular hand tracking
-        # mode = 1 - hand landmarks data collection
-
         FONT = cv2.FONT_HERSHEY_COMPLEX
         COLOR_WHITE = (255, 255, 255)
-
-
 
         gesture_classifier = GestureClassifier("models/sign_net_v6.tflite")
 
@@ -106,7 +102,7 @@ class MediaPipeHandLandmarks:
                             hand_part = self._prep_image_part(image_copy, bounding_box)
                             hand_gesture_id, probability = gesture_classifier(hand_part)
 
-                            if time.time() - self.last_gesture_time > 1 and hand_gesture_id == self.last_gesture_id:
+                            if time.time() - self.last_gesture_time > 1 and hand_gesture_id == self.last_gesture_id and self.mode == 1:
                                 if hand_gesture_id == 0:
                                     pyautogui.press("backspace")
                                 elif hand_gesture_id == 1:
@@ -142,10 +138,10 @@ class MediaPipeHandLandmarks:
                             finally:
                                 self._save_single_record = False
 
-                        if self.mode == 2 and not self._is_data_recording:
+                        if self.mode == 3 and not self._is_data_recording:
                             self._last_image_index = None
                         
-                        if self.mode == 2 and self._is_data_recording:
+                        if self.mode == 3 and self._is_data_recording:
                             try:
                                 self._save_image_part(image, bounding_box)
                             except Exception as e:
@@ -167,8 +163,27 @@ class MediaPipeHandLandmarks:
                     0.7,
                     COLOR_WHITE,
                 )
-
-                if self.mode == 1 or self.mode == 2:
+                
+                if self.mode == 0:
+                    cv2.putText(
+                        image_copy,
+                        f"Overview mode",
+                        (20, 90),
+                        FONT,
+                        0.7,
+                        COLOR_WHITE,
+                    )
+                    
+                if self.mode == 1:
+                    cv2.putText(
+                        image_copy,
+                        f"Gestures actions mode",
+                        (20, 90),
+                        FONT,
+                        0.7,
+                        COLOR_WHITE,
+                    )
+                if self.mode == 2 or self.mode == 3:
                     cv2.putText(
                         image_copy,
                         f"Label: {self.image_label}",
@@ -177,7 +192,7 @@ class MediaPipeHandLandmarks:
                         0.7,
                         COLOR_WHITE,
                     )
-                if self.mode == 2:
+                if self.mode == 3:
                     cv2.putText(
                         image_copy,
                         f"Data collection mode",
@@ -270,10 +285,10 @@ class MediaPipeHandLandmarks:
         if not self._is_data_recording:
             self._select_mode(key)
 
-        if self.mode == 1:
+        if self.mode == 2:
             self._select_image_label(key)
 
-        if self.mode == 2:
+        if self.mode == 3:
             self._change_recording_state(key)
             
         if key == 102: # "f" - flip image
