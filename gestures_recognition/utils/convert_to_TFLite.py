@@ -8,4 +8,4 @@ def save_as_tflite(model_path: str, save_path:str) -> None:
         with open(save_path, "wb") as f:
             f.write(tflite_model)
             
-save_as_tflite('models/sign_net-1717943651.hdf5', 'models/sign_net_v5.tflite')
+save_as_tflite('models/sign_net-1717946829.hdf5', 'models/sign_net_v6.tflite')

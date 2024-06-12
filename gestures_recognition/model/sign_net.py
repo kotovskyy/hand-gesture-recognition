@@ -27,7 +27,6 @@ class SignNet:
         self.model.add(Conv2D(128, (3, 3), activation="relu"))
         self.model.add(MaxPooling2D((2, 2)))
         self.model.add(Conv2D(128, (3, 3), activation="relu"))
-        # self.model.add(MaxPooling2D((2, 2)))
         self.model.add(keras.layers.Dropout(0.5))
         self.model.add(Flatten())
         self.model.add(Dense(64, activation="relu"))
